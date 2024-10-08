@@ -22,6 +22,11 @@ const FILES_COLUMN_DEFINITIONS = [
     header: "Size",
     cell: (item) => Utils.bytesToSize(item.Size!),
   },
+  {
+    id: "tags",
+    header: "Tags",
+    cell: (item) => item.Tags?.map(tag => `${tag.Key}: ${tag.Value}`).join(', ') || 'No tags',
+  },
 ];
 
 const FEEDBACK_COLUMN_DEFINITIONS = [
