@@ -25,6 +25,7 @@ export default function DataPage() {
   const apiClient = new ApiClient(appContext);
   const [lastSyncTime, setLastSyncTime] = useState("")
   const [showUnsyncedAlert, setShowUnsyncedAlert] = useState(false);
+  const [adminType, setAdminType] = useState<string | null>(null);
 
   /** Function to get the last synced time */
   const refreshSyncTime = async () => {
@@ -51,6 +52,8 @@ export default function DataPage() {
           const data = JSON.parse(admin);
           if (data.some(role => role.includes("Admin"))) {
             setAdmin(true);
+            const adminPrefix = adminRole.replace("Admin", ""); // Extract the type of admin (e.g., "Master", "Legal")
+            setAdminType(adminPrefix); // Store the type of admin
           }
         }
       }
