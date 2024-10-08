@@ -52,7 +52,8 @@ export default function DataPage() {
           const data = JSON.parse(admin);
           if (data.some(role => role.includes("Admin"))) {
             setAdmin(true);
-            const adminPrefix = data.replace("Admin", ""); // Extract the type of admin (e.g., "Master", "Legal")
+            const adminRole = data.find(role => role.includes("Admin"));
+            const adminPrefix = adminRole.replace("Admin", ""); // Extract the type of admin (e.g., "Master", "Legal")
             setAdminType(adminPrefix); // Store the type of admin
           }
         }
