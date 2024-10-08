@@ -69,6 +69,7 @@ export default function DataPage() {
 
   /** If the admin status check fails, just show an access denied page*/
   if (!admin) {
+    console.log("Admin state is false. Not rendering tabs.");
     return (
       <div
         style={{
