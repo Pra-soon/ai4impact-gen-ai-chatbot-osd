@@ -41,4 +41,5 @@ export const feedbackTypes = [
   {label: "Other", value:"other", disabled: false}
 ]
 
-export const CHATBOT_NAME = "RAG AI Chatbot";
+export const CHATBOT_NAME = "ABE Homepage";
+export const WELCOME_PAGE = "What can I help you with?";

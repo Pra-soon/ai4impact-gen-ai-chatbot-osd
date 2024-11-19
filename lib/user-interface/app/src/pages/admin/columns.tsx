@@ -3,6 +3,10 @@ import { DateTime } from "luxon";
 import { Utils } from "../../common/utils";
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@cloudscape-design/components";
+import React from 'react';
+
+const s3Url = "s3://genaiosdchatstack-chatbotapiknowledgesourcebucketd-78kbdy3k3ws1/";
+const httpsUrl = s3Url.replace(/^s3:\/\//, "https://s3.amazonaws.com/");
 
 
 export function getColumnDefinition(documentType: AdminDataType, onProblemClick: (item: any) => void) {
@@ -10,10 +14,18 @@ export function getColumnDefinition(documentType: AdminDataType, onProblemClick:
     {
       id: "problem",
       header: "Problem",
+      // cell: (item) => {
+      //   return (
+      //     <Button onClick={() => onProblemClick(item)} variant="link">
+      //       {item.Problem}
+      //     </Button>
+      //   );
+      // },
       cell: (item) => {
+        const problemText = item.Problem && item.Problem.trim() !== "" ? item.Problem : "–";
         return (
           <Button onClick={() => onProblemClick(item)} variant="link">
-            {item.Problem}
+            {problemText}
           </Button>
         );
       },
@@ -45,7 +57,17 @@ export function getColumnDefinition(documentType: AdminDataType, onProblemClick:
     {
       id: "name",
       header: "Name",
-      cell: (item) => item.Key!,
+      // cell: (item) => item.Key!,
+      cell: (item) => (
+        <a 
+          href={`${httpsUrl}/${item.Key}`}
+          download
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {item.Key}
+        </a>
+      ),
       isRowHeader: true,
     },
     {

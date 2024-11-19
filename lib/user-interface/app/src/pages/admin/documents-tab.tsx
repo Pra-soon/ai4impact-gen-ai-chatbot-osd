@@ -35,6 +35,7 @@ export default function DocumentsTab(props: DocumentsTabProps) {
   const [selectedItems, setSelectedItems] = useState<any[]>([]);
   const [showModalDelete, setShowModalDelete] = useState(false);
   const { addNotification, removeNotification } = useNotifications();
+  const s3Url = "s3://genaiosdchatstack-chatbotapiknowledgesourcebucketd-78kbdy3k3ws1/";
 
   /** Pagination, but this is currently not working.
    * You will likely need to take the items object from useCollection in the
@@ -127,7 +128,8 @@ export default function DocumentsTab(props: DocumentsTabProps) {
         console.error(Utils.getErrorMessage(error));
       }
 
-      console.log(pages);
+      console.log("PAGES!", pages);
+      console.log(pages[0].Contents);
       setLoading(false);
     },
     [appContext, props.documentType]
