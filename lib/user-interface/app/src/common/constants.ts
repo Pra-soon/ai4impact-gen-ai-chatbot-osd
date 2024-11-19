@@ -41,5 +41,5 @@ export const feedbackTypes = [
   {label: "Other", value:"other", disabled: false}
 ]
 
-export const CHATBOT_NAME = "ABE Homepage";
+export const CHATBOT_NAME = "ABE - Assistive Buyers Engine";
 export const WELCOME_PAGE = "What can I help you with?";
