@@ -1,23 +1,27 @@
 
 # # Define tag values and their descriptions for categorizing documents (when values are agency specific)
 CATEGORIES = {
-    'user guide': 'A document that provides step-by-step instructions on how to purchase for a specific contract.',
+    'user guide': 'A detailed document providing clear, step-by-step instructions on how to procure goods or services under a specific contract. It outlines the key terms, processes, and requirements buyers need to follow.',
     'handbook': 'A comprehensive reference document that covers various aspects of OSD Procurement',
     'swc index': 'A sheet containing a list telling what contracts are available and who manages them.',
+    'external reference': 'Supplementary documents or links that direct users to additional resources, guides, or pages. These references provide further clarity or context for procurement-related topics.',
+    'memos': 'Documents which are official communications that outline updates, amendments, or directives regarding the Handbook, regulations, or other procurement policies. These documents ensure compliance with the latest changes.',
     'unknown': 'Documents that do not clearly fit into any of the above categories.'
 }
 
 # Define custom tags to provide additional metadata for documents.
 CUSTOM_TAGS = {
     'complexity': ['low', 'medium', 'high'],# Levels indicating document complexity for new buyers.
-    'author':[]  # Placeholder for author names; values will be extracted from content if available.
+    'author':[] , # Placeholder for author names; values will be extracted from content if available.,
+    'creation date':[]
 }
 
 # Descriptions for each tag to guide their use and selection.
 TAG_DESCRIPTIONS = {
     'category': 'The type of document',
     'complexity': 'Indicates how complex the document is to understand for a new buyer for state.',
-    'author': 'The name of the person or organization who wrote or published the document. Extract this from the document content if available.'
+    'author': 'The name of the person or organization who wrote or published the document. Extract this from the document content if available.',
+    'creation date': 'The date when the document was created. If that is not available, then the date when document is being uploaded.'
 }
 
 # Function to compile all tags (predefined and custom) into a dictionary for easy access.
@@ -48,7 +52,8 @@ Example JSON Response:
     "tags": {{
         "category": "user guide",
         "complexity": "medium",
-        "author": "Commonwealth of Massachusetts Operational Services Division"
+        "author": "Operational Services Division",
+        "creation date": "2 Nov 2023"
     }}
 }}
 

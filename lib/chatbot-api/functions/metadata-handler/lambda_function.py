@@ -25,7 +25,7 @@ def retrieve_kb_docs(file_name, knowledge_base_id):
             },
             retrievalConfiguration={
                 'vectorSearchConfiguration': {
-                    'numberOfResults': 20  # We only want the most relevant document
+                    'numberOfResults': 100  # We only want the most relevant document
                 }
             }
         )
@@ -33,6 +33,7 @@ def retrieve_kb_docs(file_name, knowledge_base_id):
         full_content = []
         file_uri = []
         if response['retrievalResults']:
+            print(f"Complete Response {response['retrievalResults']}")
             for result in response['retrievalResults']:
                 uri = result['location']['s3Location']['uri']
                 if file_name in uri:
@@ -75,13 +76,46 @@ def summarize_and_categorize(key,content):
             })
         )
 
-        raw_response_body= response['body'].read()
+        #
+        raw_response_body= response['body'].read().decode('utf-8') #Added decoding
         print(f"Raw llm output : {raw_response_body}")
+
+        # Parse the raw response body
         try:
             result = json.loads(raw_response_body)
         except json.JSONDecodeError:
-            print("Error: Response not in JSON format")
-            result = {"content": [{"text": raw_response_body}]}
+            print("Error: Response body is not valid JSON")
+            return {
+                "summary": "Error parsing response body",
+                "tags": {"category": "unknown"}
+            }
+
+        # Validate 'content' field
+        if 'content' not in result or not result['content']:
+            print("Error: 'content' field is missing or empty")
+            return {
+                "summary": "Error generating summary",
+                "tags": {"category": "unknown"}
+            }
+
+        # Extract and parse the text field
+        text_content = result['content'][0].get('text', '')
+        if not text_content:
+            print("Error: 'text' field in 'content' is empty")
+            return {
+                "summary": "Error generating summary",
+                "tags": {"category": "unknown"}
+            }
+
+        # Parse the nested JSON string in the 'text' field
+        try:
+            summary_and_tags = json.loads(text_content)
+        except json.JSONDecodeError:
+            print(f"Error parsing 'text' as JSON: {text_content}")
+            return {
+                "summary": "Error parsing nested JSON in 'text'",
+                "tags": {"category": "unknown"}
+            }
 
         summary_and_tags = json.loads(result['content'][0]['text'])
         # Validate the tags
@@ -134,18 +168,6 @@ def get_complete_metadata(bucket):
         print(f"Error occured in fetching complete metadata : {e}")
         return None
 
-def fetch_metadata(bucket):
-    try:
-        metadata_file = "metadata.txt"
-        response = s3.get_object(Bucket=bucket, Key=metadata_file)
-        content = response['Body'].read().decode('utf-8')
-        metadata = json.loads(content)  # Parse JSON content
-        print(f"Fetched metadata: {metadata}")  # Log fetched metadata
-        return metadata
-    except Exception as e:
-        print(f"Error fetching metadata file: {e}")
-        return {"error": f"Failed to fetch metadata file: {str(e)}"}
-
 
 def lambda_handler(event, context):
     try:
@@ -164,27 +186,6 @@ def lambda_handler(event, context):
     except:
         print("Issue checking for s3 action")
 
-    # Handle metadata retrieval request
-    try:
-        if event.get("operation") == "fetch_metadata":
-            filter_key = event.get("filter_key", "")  # Extract filter_key from the event payload
-            metadata = fetch_metadata(os.environ["BUCKET"])  # Fetch metadata from metadata.txt
-            if filter_key:
-                # If a filter_key is provided, filter the metadata
-                metadata = {
-                    k: v for k, v in metadata.items() if filter_key in k or filter_key in str(v)
-                }
-                print(f"Filtered metadata: {metadata}")  # Log filtered metadata
-            return {
-                "statusCode": 200,
-                "body": json.dumps({"metadata": metadata})
-            }
-    except Exception as e:
-        print(f"Error in fetching metadata: {e}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({"error": str(e)})
-        }
 
     try:
         # Get the bucket name and file key from the event, handling URL-encoded characters
