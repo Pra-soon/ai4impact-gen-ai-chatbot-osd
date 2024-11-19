@@ -20,7 +20,7 @@ CUSTOM_TAGS = {
 TAG_DESCRIPTIONS = {
     'category': 'The type of document',
     'complexity': 'Indicates how complex the document is to understand for a new buyer for state.',
-    'author': 'The name of the person or organization who wrote or published the document. Extract this from the document content if available.',
+    'author': 'The name of the person or organization who wrote or published the document. Extract this from the document content if available else put unknown.',
     'creation date': 'The date when the document was created. If that is not available, then the date when document is being uploaded.'
 }
 
