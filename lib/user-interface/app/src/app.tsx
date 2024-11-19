@@ -24,9 +24,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Landing Page */}
-          <Route path="/" element={<LandingPage u4={uuidv4} />} />
-          <Route path="/about" element={<LandingPageInfo u4={uuidv4} />} />
-          <Route path="/get-started" element={<LandingPageStart u4={uuidv4} />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<LandingPageInfo />} />
+          <Route path="/get-started" element={<LandingPageStart />} />
 
           {/* Grouped Routes with Global Header */}
           <Route

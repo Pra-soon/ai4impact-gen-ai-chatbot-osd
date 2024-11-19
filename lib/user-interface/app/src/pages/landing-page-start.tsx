@@ -82,7 +82,7 @@ const TextContainer = styled.div`
     animation: ${fadeIn} 0.75s ease-in-out;
     z-index: 2;
     text-align: center;
-    padding: 0 90px 20px 90px;
+    padding: 0 90px 23px 90px;
     box-sizing: border-box;
     transition: 0.3s ease-in-out all;
 
