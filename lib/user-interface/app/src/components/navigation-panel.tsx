@@ -99,6 +99,15 @@ export default function NavigationPanel() {
             </Box>
         }]),
       },
+      // {
+      //   type: "section",
+      //   text: "FAQ & Guide",
+      //   items: [
+      //     { type: "link", text: "About the tool", href: "/faq-and-guide/about-chatbot" },
+      //     { type: "link", text: "How to Use", href: "/faq-and-guide/how-to-use" },
+      //     { type: "link", text: "Support", href: "/faq-and-guide/support" },
+      //   ],
+      // },
     ];
     try {
       const result = await Auth.currentAuthenticatedUser();

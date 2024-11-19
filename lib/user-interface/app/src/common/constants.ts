@@ -42,3 +42,4 @@ export const feedbackTypes = [
 ]
 
 export const CHATBOT_NAME = "ABE - Assistive Buyers Engine";
+export const WELCOME_PAGE = "What can I help you with?";
