@@ -62,12 +62,6 @@ const HeaderBar = styled.div`
     padding: 22px 25px 0 0;
 `;
 
-const Icon = styled.img`
-    height: 4.5vh;
-    width: auto;
-    opacity: 0.95;
-`;
-
 const SkipButton = styled.div`
     color: rgb(220, 220, 220);
     font-size: 14px;
@@ -81,23 +75,26 @@ const SkipButton = styled.div`
     }
 `;
 
-const TextContainer = styled.div`
-    font-size: 105px;
+const TextContainer = styled.span`
+    font-size: 30px;
+    font-weight: 700;
+    color: rgb(220, 220, 220);
+    animation: ${fadeIn} 0.75s ease-in-out;
+    z-index: 2;
+    text-align: center;
+    padding: 0 90px;
+    box-sizing: border-box;
+`;
+
+const ArrowContainer = styled.span`
+    font-size: 30px;
     font-weight: 700;
     color: rgb(220, 220, 220);
     padding-bottom: 0px;
     animation: ${fadeIn} 0.75s ease-in-out;
     z-index: 2;
-`;
-
-const SmallTextContainer = styled.div`
-    font-size: 28px;
-    font-weight: 600;
-    color: rgb(220, 220, 220);
-    margin-top: -10px;
-    margin-bottom: 50px;
-    animation: ${fadeIn} 0.75s ease-in-out;
-    z-index: 2;
+    text-align: center;
+    padding-left: 10px;
     transition: 0.3s ease-in-out all;
 
     &:hover {
@@ -107,21 +104,27 @@ const SmallTextContainer = styled.div`
 `;
 
 
-const LandingPage = () => {
+const LandingPageInfo = () => {
     const navigate = useNavigate();
 
     const handleSkipButtonClick = () => {
-        navigate(`/chatbot/playground/${uuidv4()}`); // Navigate to the chatbot
+        navigate(`/chatbot/playground/${uuidv4()}`);
     };
 
     const handleNextButtonClick = () => {
-        navigate(`/about`); 
+        navigate(`/get-started`); 
+    };
+
+    const handleBackButtonClick = () => {
+        navigate(`/`); 
     };
 
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === "ArrowRight") {
                 handleNextButtonClick();
+            } else if (event.key === "ArrowLeft") {
+                handleBackButtonClick();
             }
         };
 
@@ -137,12 +140,15 @@ const LandingPage = () => {
             <HeaderBar>
                 <SkipButton onClick={handleSkipButtonClick}>Skip to Chat {'>'}</SkipButton>
             </HeaderBar>
-            <TextContainer>Welcome to ABE</TextContainer>
-            <SmallTextContainer onClick={handleNextButtonClick}>Let's learn more about what I can do for you →</SmallTextContainer>
+            <TextContainer>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+            dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat 
+            <ArrowContainer onClick={handleNextButtonClick}>→</ArrowContainer>
+            </TextContainer>
             <Circle className="darkBlue" />
             <Circle className="lightBlue" />
         </PageContainer>
     );
 };
 
-export default LandingPage;
+export default LandingPageInfo;

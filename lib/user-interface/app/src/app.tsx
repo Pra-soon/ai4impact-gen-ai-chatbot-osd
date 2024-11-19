@@ -11,6 +11,8 @@ import AboutChatbot from "./pages/help/about-chatbot";
 import Support from "./pages/help/support";
 import HowToUse from "./pages/help/how-to-use";
 import LandingPage from "./pages/landing-page";
+import LandingPageInfo from "./pages/landing-page-info";
+import LandingPageStart from "./pages/landing-page-start";
 import { v4 as uuidv4 } from "uuid";
 import "./styles/app.scss";
 
@@ -23,6 +25,8 @@ function App() {
         <Routes>
           {/* Landing Page */}
           <Route path="/" element={<LandingPage u4={uuidv4} />} />
+          <Route path="/about" element={<LandingPageInfo u4={uuidv4} />} />
+          <Route path="/get-started" element={<LandingPageStart u4={uuidv4} />} />
 
           {/* Grouped Routes with Global Header */}
           <Route

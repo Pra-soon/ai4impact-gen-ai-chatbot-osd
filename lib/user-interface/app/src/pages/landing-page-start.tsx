@@ -62,12 +62,6 @@ const HeaderBar = styled.div`
     padding: 22px 25px 0 0;
 `;
 
-const Icon = styled.img`
-    height: 4.5vh;
-    width: auto;
-    opacity: 0.95;
-`;
-
 const SkipButton = styled.div`
     color: rgb(220, 220, 220);
     font-size: 14px;
@@ -82,23 +76,16 @@ const SkipButton = styled.div`
 `;
 
 const TextContainer = styled.div`
-    font-size: 105px;
+    font-size: 70px;
     font-weight: 700;
     color: rgb(220, 220, 220);
-    padding-bottom: 0px;
     animation: ${fadeIn} 0.75s ease-in-out;
     z-index: 2;
-`;
-
-const SmallTextContainer = styled.div`
-    font-size: 28px;
-    font-weight: 600;
-    color: rgb(220, 220, 220);
-    margin-top: -10px;
-    margin-bottom: 50px;
-    animation: ${fadeIn} 0.75s ease-in-out;
-    z-index: 2;
+    text-align: center;
+    padding: 0 90px 20px 90px;
+    box-sizing: border-box;
     transition: 0.3s ease-in-out all;
+
 
     &:hover {
         cursor: pointer;
@@ -107,21 +94,23 @@ const SmallTextContainer = styled.div`
 `;
 
 
-const LandingPage = () => {
+const LandingPageStart = () => {
     const navigate = useNavigate();
 
-    const handleSkipButtonClick = () => {
-        navigate(`/chatbot/playground/${uuidv4()}`); // Navigate to the chatbot
+    const handleButtonClick = () => {
+        navigate(`/chatbot/playground/${uuidv4()}`);
     };
 
-    const handleNextButtonClick = () => {
+    const handleBackButtonClick = () => {
         navigate(`/about`); 
     };
 
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === "ArrowRight") {
-                handleNextButtonClick();
+                handleButtonClick();
+            } else if (event.key === "ArrowLeft") {
+                handleBackButtonClick();
             }
         };
 
@@ -134,15 +123,16 @@ const LandingPage = () => {
 
     return (
         <PageContainer>
-            <HeaderBar>
-                <SkipButton onClick={handleSkipButtonClick}>Skip to Chat {'>'}</SkipButton>
-            </HeaderBar>
-            <TextContainer>Welcome to ABE</TextContainer>
-            <SmallTextContainer onClick={handleNextButtonClick}>Let's learn more about what I can do for you →</SmallTextContainer>
+            {/* <HeaderBar>
+                <SkipButton onClick={handleButtonClick}>Skip to Chat {'>'}</SkipButton>
+            </HeaderBar> */}
+            <TextContainer onClick={handleButtonClick}>
+                Let's get started →
+            </TextContainer>
             <Circle className="darkBlue" />
             <Circle className="lightBlue" />
         </PageContainer>
     );
 };
 
-export default LandingPage;
+export default LandingPageStart;
