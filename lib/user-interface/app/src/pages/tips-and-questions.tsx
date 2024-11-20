@@ -123,7 +123,7 @@ import {
               items={[
                 {
                   text: CHATBOT_NAME,
-                  href: "/",
+                  href: "/*",
                 },
                 {
                   text: "Getting Started",
