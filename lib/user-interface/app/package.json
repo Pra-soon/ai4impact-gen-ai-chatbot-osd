@@ -57,5 +57,11 @@
     "typescript": "^5.0.2",
     "vite": "^4.5.5",
     "zen-observable": "^0.10.0"
+  },
+  "resolutions": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@types/react": "^18.2.15",
+    "react-virtual": "^2.10.4"
   }
 }
