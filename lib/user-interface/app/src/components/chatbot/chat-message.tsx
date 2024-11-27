@@ -59,7 +59,9 @@ export default function ChatMessage(props: ChatMessageProps) {
 
   const showSources = props.message.metadata?.Sources && (props.message.metadata.Sources as any[]).length > 0;
 
-  console.log("Sources:", props.message.metadata.Sources);
+  console.log("Message metadata:", props.message.metadata);
+  console.log("Show sources:", showSources);
+  console.log("Sources array:", props.message.metadata?.Sources);
 
 
   return (
