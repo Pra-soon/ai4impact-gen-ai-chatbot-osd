@@ -30,6 +30,7 @@ import "../../styles/app.scss";
 import { useNotifications } from "../notif-manager";
 import { Utils } from "../../common/utils";
 import {feedbackCategories, feedbackTypes} from '../../common/constants'
+import styled from 'styled-components';
 
 export interface ChatMessageProps {
   message: ChatBotHistoryItem;  
@@ -37,7 +38,9 @@ export interface ChatMessageProps {
   onThumbsDown: (feedbackTopic : string, feedbackType : string, feedbackMessage: string) => void;  
 }
 
-
+const SourcesContainer = styled.div`
+  margin-top: 8px;
+`;
 
 export default function ChatMessage(props: ChatMessageProps) {
   const [loading, setLoading] = useState<boolean>(false);
@@ -123,25 +126,25 @@ export default function ChatMessage(props: ChatMessageProps) {
           footer={
             showSources && (
               <SpaceBetween direction="horizontal" size="s">
-              {/* <ButtonDropdown
-              items={(props.message.metadata.Sources as any[]).map((item) => { return {id: "id", disabled: false, text : item.title, href : item.uri, external : true, externalIconAriaLabel: "(opens in new tab)"}})}
-        
-              >Sources</ButtonDropdown>               */}
-              <ButtonDropdown
-                items={(props.message.metadata.Sources as any[]).map((item) => {
-                  const s3Url = item.uri;
-                  const httpsUrl = s3Url.replace(/^s3:\/\//, "https://s3.amazonaws.com/");
-                  return {
-                    id: "id",
-                    disabled: false,
-                    text: item.title,
-                    href: httpsUrl,
-                    external: true,
-                    externalIconAriaLabel: "(opens in new tab)",
-                  };
-                })}
-              />
-
+                <ButtonDropdown
+                  expandToViewport
+                  onItemClick={({ detail }) => {
+                    window.open(detail.href, '_blank');
+                  }}
+                  items={(props.message.metadata.Sources as any[]).map((item) => {
+                    const s3Url = item.uri;
+                    const httpsUrl = s3Url.replace(/^s3:\/\//, "https://s3.amazonaws.com/");
+                    return {
+                      id: item.title,
+                      text: item.title,
+                      href: httpsUrl,
+                      external: true,
+                      externalIconAriaLabel: "(opens in new tab)"
+                    };
+                  })}
+                >
+                  Sources
+                </ButtonDropdown>
               </SpaceBetween>
             )
           }
