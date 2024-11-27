@@ -63,11 +63,14 @@ export default function Chat(props: { sessionId?: string}) {
           setMessageHistory(
             hist
               .filter((x) => x !== null)
-              .map((x) => ({
-                type: x!.type as ChatBotMessageType,
-                metadata: x!.metadata || {},
-                content: x!.content || '',
-              }))
+              .map((x) => {
+                const chatbotData = x!.chatbot || {};
+                return {
+                  type: x!.type as ChatBotMessageType,
+                  metadata: chatbotData.sources ? { "Sources": chatbotData.sources } : (x!.metadata || {}),
+                  content: chatbotData.final_response || x!.content || '',
+                };
+              })
           );
 
           window.scrollTo({

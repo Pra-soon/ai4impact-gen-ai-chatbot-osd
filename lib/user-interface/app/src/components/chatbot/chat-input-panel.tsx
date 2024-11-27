@@ -316,18 +316,15 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         // Update the chat history state with the new message        
         messageHistoryRef.current = [
           ...messageHistoryRef.current.slice(0, -2),
-
           {
             type: ChatBotMessageType.Human,
             content: messageToSend,
-            metadata: {
-              
-            },            
+            metadata: {},
           },
           {
-            type: ChatBotMessageType.AI,            
-            content: receivedData,
-            metadata: sources,
+            type: ChatBotMessageType.AI,
+            content: receivedData || '',
+            metadata: sources || {},
           },
         ];        
         props.setMessageHistory(messageHistoryRef.current);        
