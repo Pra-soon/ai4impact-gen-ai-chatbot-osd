@@ -32,7 +32,9 @@
     "regenerator-runtime": "^0.14.0",
     "remark-gfm": "^4.0.0",
     "styled-components": "^6.1.13",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "@mui/icons-material": "^5.15.11",
+    "@mui/material": "^5.15.11"
   },
   "devDependencies": {
     "@types/luxon": "^3.3.2",
