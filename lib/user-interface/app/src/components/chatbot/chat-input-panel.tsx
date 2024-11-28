@@ -232,23 +232,24 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         }
 
         if (!incomingMetadata) {
-          const newReceivedData = receivedData + data.data;
-          setReceivedData(newReceivedData);
-          
-          messageHistoryRef.current = [
-            ...messageHistoryRef.current.slice(0, -2),
-            {
-              type: ChatBotMessageType.Human,
-              content: messageToSend,
-              metadata: {},
-            },
-            {
-              type: ChatBotMessageType.AI,
-              content: newReceivedData,
-              metadata: sources,
-            },
-          ];
-          props.setMessageHistory(messageHistoryRef.current);
+          setReceivedData(prev => {
+            const newReceivedData = prev + data.data;
+            messageHistoryRef.current = [
+              ...messageHistoryRef.current.slice(0, -2),
+              {
+                type: ChatBotMessageType.Human,
+                content: messageToSend,
+                metadata: {},
+              },
+              {
+                type: ChatBotMessageType.AI,
+                content: newReceivedData,
+                metadata: sources,
+              },
+            ];
+            props.setMessageHistory(messageHistoryRef.current);
+            return newReceivedData;
+          });
         } else {
           try {
             let sourceData = JSON.parse(data.data);
