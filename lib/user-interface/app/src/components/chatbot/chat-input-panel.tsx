@@ -182,16 +182,21 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       let incomingMetadata = false;
 
       setTimeout(() => {
-        if (!receivedData) {
-          ws.close();
-          messageHistoryRef.current.pop();
-          messageHistoryRef.current.push({
-            type: ChatBotMessageType.AI,          
-            content: 'Response timed out!',
-            metadata: {},
-          });
-          props.setMessageHistory(messageHistoryRef.current);
-        }
+        setReceivedData(prevData => {
+          if (!prevData) {
+            ws.close();
+            messageHistoryRef.current = [
+              ...messageHistoryRef.current.slice(0, -1),
+              {
+                type: ChatBotMessageType.AI,          
+                content: 'Response timed out!',
+                metadata: {},
+              }
+            ];
+            props.setMessageHistory(messageHistoryRef.current);
+          }
+          return prevData;
+        });
       }, 60000);
 
       ws.addEventListener('open', function open() {
@@ -233,7 +238,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
         if (!incomingMetadata) {
           setReceivedData(prev => {
-            const newReceivedData = prev + data.data;
+            const currentResponse = prev + data.data;
             messageHistoryRef.current = [
               ...messageHistoryRef.current.slice(0, -2),
               {
@@ -243,12 +248,12 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               },
               {
                 type: ChatBotMessageType.AI,
-                content: newReceivedData,
+                content: currentResponse,
                 metadata: sources,
               },
             ];
             props.setMessageHistory(messageHistoryRef.current);
-            return newReceivedData;
+            return currentResponse;
           });
         } else {
           try {
