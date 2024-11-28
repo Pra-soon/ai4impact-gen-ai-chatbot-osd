@@ -50,6 +50,8 @@ export default function ChatMessage(props: ChatMessageProps) {
   const [selectedTopic, setSelectedTopic] = React.useState({label: "Select a Topic", value: "1"});
   const [selectedFeedbackType, setSelectedFeedbackType] = React.useState({label: "Select a Problem", value: "1"});
   const [value, setValue] = useState("");
+  const [receivedData, setReceivedData] = useState('');
+  const [sources, setSources] = useState({});
 
 
   const content =

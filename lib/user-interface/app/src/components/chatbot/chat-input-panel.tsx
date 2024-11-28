@@ -156,11 +156,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     
     try {
       props.setRunning(true);
-      let receivedData = '';      
+      setReceivedData('');
+      setSources({});
       
-      /**Add the user's query to the message history and a blank dummy message
-       * for the chatbot as the response loads
-       */
       messageHistoryRef.current = [
         ...messageHistoryRef.current.slice(0, -2),
         {
@@ -170,43 +168,32 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         },
         {
           type: ChatBotMessageType.AI,
-          content: receivedData || '',
-          metadata: sources || {},
+          content: '',
+          metadata: {},
         },
       ];
       props.setMessageHistory(messageHistoryRef.current);
 
-      let firstTime = false;
-      if (messageHistoryRef.current.length < 3) {
-        firstTime = true;
-      }
-      // old non-auth url -> const wsUrl = 'wss://ngdpdxffy0.execute-api.us-east-1.amazonaws.com/test/'; 
-      // old shared url with auth -> wss://caoyb4x42c.execute-api.us-east-1.amazonaws.com/test/     
-      // first deployment URL 'wss://zrkw21d01g.execute-api.us-east-1.amazonaws.com/prod/';
-      const TEST_URL = appContext.wsEndpoint+"/"
-
-      // Get a JWT token for the API to authenticate on      
-      const TOKEN = await Utils.authenticate()
-                
-      const wsUrl = TEST_URL+'?Authorization='+TOKEN;
+      let firstTime = messageHistoryRef.current.length < 3;
+      const TEST_URL = appContext.wsEndpoint + "/";
+      const TOKEN = await Utils.authenticate();
+      const wsUrl = TEST_URL + '?Authorization=' + TOKEN;
       const ws = new WebSocket(wsUrl);
+      let incomingMetadata = false;
 
-      let incomingMetadata: boolean = false;
-      let receivedData = '';
-      let sources = {};
+      setTimeout(() => {
+        if (!receivedData) {
+          ws.close();
+          messageHistoryRef.current.pop();
+          messageHistoryRef.current.push({
+            type: ChatBotMessageType.AI,          
+            content: 'Response timed out!',
+            metadata: {},
+          });
+          props.setMessageHistory(messageHistoryRef.current);
+        }
+      }, 60000);
 
-      /**If there is no response after a minute, time out the response to try again. */
-      setTimeout(() => {if (receivedData == '') {
-        ws.close()
-        messageHistoryRef.current.pop();
-        messageHistoryRef.current.push({
-          type: ChatBotMessageType.AI,          
-          content: 'Response timed out!',
-          metadata: {},
-        })
-      }},60000)
-
-      // Event listener for when the connection is open
       ws.addEventListener('open', function open() {
         console.log('Connected to the WebSocket server');        
         const message = JSON.stringify({
@@ -234,7 +221,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       // Event listener for incoming messages
       ws.addEventListener('message', async function incoming(data) {
         if (data.data.includes("<!ERROR!>:")) {
-          addNotification("error",data.data);          
+          addNotification("error", data.data);          
           ws.close();
           return;
         }
@@ -245,7 +232,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         }
 
         if (!incomingMetadata) {
-          setReceivedData(prev => prev + data.data);
+          const newReceivedData = receivedData + data.data;
+          setReceivedData(newReceivedData);
           
           messageHistoryRef.current = [
             ...messageHistoryRef.current.slice(0, -2),
@@ -256,7 +244,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             },
             {
               type: ChatBotMessageType.AI,
-              content: receivedData + data.data,
+              content: newReceivedData,
               metadata: sources,
             },
           ];
@@ -264,8 +252,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         } else {
           try {
             let sourceData = JSON.parse(data.data);
-            console.log("Raw source data:", sourceData);
-            
             sourceData = sourceData.map((item) => ({
               title: item.title || item.uri.split("/").pop(),
               uri: item.uri
@@ -273,7 +259,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             
             const newSources = { "Sources": sourceData };
             setSources(newSources);
-            console.log("Processed sources:", newSources);
             
             messageHistoryRef.current = [
               ...messageHistoryRef.current.slice(0, -1),
