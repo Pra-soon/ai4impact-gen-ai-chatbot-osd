@@ -76,6 +76,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     setSelectedDataSource
   ] = useState({ label: "Bedrock Knowledge Base", value: "kb" } as SelectProps.ChangeDetail["selectedOption"]);
 
+  const [receivedData, setReceivedData] = useState('');
+  const [sources, setSources] = useState({});
+
   useEffect(() => {
     messageHistoryRef.current = props.messageHistory;    
   }, [props.messageHistory]);
@@ -230,24 +233,20 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       });
       // Event listener for incoming messages
       ws.addEventListener('message', async function incoming(data) {
-        /**This is a custom tag from the API that denotes that an error occured
-         * and the next chunk will be an error message. */              
         if (data.data.includes("<!ERROR!>:")) {
           addNotification("error",data.data);          
           ws.close();
           return;
         }
-        /**This is a custom tag from the API that denotes when the model response
-         * ends and when the sources are coming in
-         */
+        
         if (data.data == '!<|EOF_STREAM|>!') {          
           incomingMetadata = true;
           return;          
         }
+
         if (!incomingMetadata) {
-          receivedData += data.data;
+          setReceivedData(prev => prev + data.data);
           
-          // Update message history with current progress
           messageHistoryRef.current = [
             ...messageHistoryRef.current.slice(0, -2),
             {
@@ -257,7 +256,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             },
             {
               type: ChatBotMessageType.AI,
-              content: receivedData || '',
+              content: receivedData + data.data,
               metadata: sources,
             },
           ];
@@ -272,16 +271,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               uri: item.uri
             }));
             
-            sources = { "Sources": sourceData };
-            console.log("Processed sources:", sources);
+            const newSources = { "Sources": sourceData };
+            setSources(newSources);
+            console.log("Processed sources:", newSources);
             
-            // Update message history with sources
             messageHistoryRef.current = [
               ...messageHistoryRef.current.slice(0, -1),
               {
                 type: ChatBotMessageType.AI,
                 content: receivedData,
-                metadata: sources
+                metadata: newSources
               }
             ];
             props.setMessageHistory(messageHistoryRef.current);
