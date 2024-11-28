@@ -189,6 +189,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const ws = new WebSocket(wsUrl);
 
       let incomingMetadata: boolean = false;
+      let receivedData = '';
       let sources = {};
 
       /**If there is no response after a minute, time out the response to try again. */
@@ -245,6 +246,22 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         }
         if (!incomingMetadata) {
           receivedData += data.data;
+          
+          // Update message history with current progress
+          messageHistoryRef.current = [
+            ...messageHistoryRef.current.slice(0, -2),
+            {
+              type: ChatBotMessageType.Human,
+              content: messageToSend,
+              metadata: {},
+            },
+            {
+              type: ChatBotMessageType.AI,
+              content: receivedData || '',
+              metadata: sources,
+            },
+          ];
+          props.setMessageHistory(messageHistoryRef.current);
         } else {
           try {
             let sourceData = JSON.parse(data.data);
@@ -258,7 +275,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             sources = { "Sources": sourceData };
             console.log("Processed sources:", sources);
             
-            // Update message history immediately with sources
+            // Update message history with sources
             messageHistoryRef.current = [
               ...messageHistoryRef.current.slice(0, -1),
               {
