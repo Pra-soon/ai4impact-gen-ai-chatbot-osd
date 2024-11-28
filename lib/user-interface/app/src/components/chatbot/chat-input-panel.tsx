@@ -159,18 +159,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
        * for the chatbot as the response loads
        */
       messageHistoryRef.current = [
-        ...messageHistoryRef.current,
-
+        ...messageHistoryRef.current.slice(0, -2),
         {
           type: ChatBotMessageType.Human,
           content: messageToSend,
-          metadata: {            
-          },          
+          metadata: {},
         },
         {
-          type: ChatBotMessageType.AI,          
-          content: receivedData,
-          metadata: {},
+          type: ChatBotMessageType.AI,
+          content: receivedData || '',
+          metadata: sources || {},
         },
       ];
       props.setMessageHistory(messageHistoryRef.current);
@@ -248,33 +246,32 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         if (!incomingMetadata) {
           receivedData += data.data;
         } else {
-          let sourceData = JSON.parse(data.data);
-          sourceData = sourceData.map((item) => {
-            if (item.title == "") {
-              return {title: item.uri.slice((item.uri as string).lastIndexOf("/") + 1), uri: item.uri}
-            } else {
-              return item
-            }
-          })
-          sources = { "Sources": sourceData}
-          console.log(sources);
+          try {
+            let sourceData = JSON.parse(data.data);
+            console.log("Raw source data:", sourceData);
+            
+            sourceData = sourceData.map((item) => ({
+              title: item.title || item.uri.split("/").pop(),
+              uri: item.uri
+            }));
+            
+            sources = { "Sources": sourceData };
+            console.log("Processed sources:", sources);
+            
+            // Update message history immediately with sources
+            messageHistoryRef.current = [
+              ...messageHistoryRef.current.slice(0, -1),
+              {
+                type: ChatBotMessageType.AI,
+                content: receivedData,
+                metadata: sources
+              }
+            ];
+            props.setMessageHistory(messageHistoryRef.current);
+          } catch (error) {
+            console.error("Error processing sources:", error);
+          }
         }
-
-        // Update the chat history state with the new message        
-        messageHistoryRef.current = [
-          ...messageHistoryRef.current.slice(0, -2),
-          {
-            type: ChatBotMessageType.Human,
-            content: messageToSend,
-            metadata: {},
-          },
-          {
-            type: ChatBotMessageType.AI,
-            content: receivedData || '',
-            metadata: sources || {},
-          },
-        ];        
-        props.setMessageHistory(messageHistoryRef.current);        
       });
       // Handle possible errors
       ws.addEventListener('error', function error(err) {
