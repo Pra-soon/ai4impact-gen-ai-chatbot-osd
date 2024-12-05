@@ -82,12 +82,33 @@ const SkipButton = styled.div`
 `;
 
 const TextContainer = styled.div`
-    font-size: 90px;
+    font-size: 70px;
     font-weight: 700;
     color: rgb(240, 240, 240);
     padding-bottom: 0px;
     animation: ${fadeIn} 0.75s ease-in-out;
     z-index: 2;
+    text-align: center;
+`;
+
+const SubTextContainer = styled.div`
+    font-size: 70px;
+    font-weight: 600;
+    color: rgb(240, 240, 240);
+    margin-top: -15px;
+    animation: ${fadeIn} 0.75s ease-in-out;
+    z-index: 2;
+    width: 100%;
+    text-align: center;
+`;
+
+const Separator = styled.hr`
+    border: none;
+    border-top: 1.5px solid lightgray;
+    width: 83%;
+    z-index: 2;
+    margin: 45px 0px 55px 0;
+    opacity: 0.5;
 `;
 
 const SmallTextContainer = styled.div`
@@ -137,7 +158,10 @@ const LandingPage = () => {
             <HeaderBar>
                 <SkipButton onClick={handleSkipButtonClick}>Skip to Chat {'>'}</SkipButton>
             </HeaderBar>
-            <TextContainer>Welcome to ABE</TextContainer>
+            <TextContainer>
+                Welcome to ABE
+                <SubTextContainer>Assistive Buyers Engine</SubTextContainer>
+            </TextContainer> <Separator/>
             <SmallTextContainer onClick={handleNextButtonClick}>Let's learn more about what I can do for you →</SmallTextContainer>
             <Circle className="darkBlue" />
             <Circle className="lightBlue" />
