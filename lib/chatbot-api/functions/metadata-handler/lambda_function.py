@@ -2,6 +2,7 @@ import boto3
 import json
 import urllib.parse
 import os
+from datetime import datetime
 from botocore.exceptions import ClientError
 from config import get_full_prompt, get_all_tags, CATEGORIES, CUSTOM_TAGS
 
@@ -14,7 +15,7 @@ kb_id = os.environ['KB_ID']
 
 
 # Using Knowledge Base to fetch document contents
-def retrieve_kb_docs(file_name, knowledge_base_id):
+def retrieve_kb_docs(bucket, file_name, knowledge_base_id):
     try:
         key,_ = os.path.splitext(file_name)
         print(f"Search query KB : {key}")
@@ -39,10 +40,30 @@ def retrieve_kb_docs(file_name, knowledge_base_id):
                 if file_name in uri:
                     full_content.append(result['content']['text'])
                     file_uri = uri
-            return {
-                'content': full_content,
-                'uri': file_uri
-            }
+
+            if full_content:
+                return {
+                    'content': full_content,
+                    'uri': file_uri
+                }
+            else:
+                try:
+                    print(f"Bucket : {bucket} and File : {file_name}")
+                    s3_obj = s3.get_object(Bucket = bucket,Key= file_name)
+                    full_content = s3_obj['Body'].read().decode('utf-8')
+                    file_uri = f"s3://{bucket}/{file_name}"
+                    print(f"Successfully retrieved file from S3: {file_uri}")
+                    return {
+                        'content': [full_content],
+                        'uri': file_uri
+                    }
+                except Exception as e:
+                    print(f"Error reading file content from S3: {e}")
+                    return {
+                        'content': full_content,
+                        'uri': file_uri
+                    }
+
 
         else:
             return {
@@ -52,7 +73,7 @@ def retrieve_kb_docs(file_name, knowledge_base_id):
     except ClientError as e:
         print(f"Error fetching knowledge base docs: {e}")
         return {
-            'content': "Error occurred while searching the knowledge base.",
+            'content': [],
             'uri': None
         }
 
@@ -118,14 +139,32 @@ def summarize_and_categorize(key,content):
             }
 
         summary_and_tags = json.loads(result['content'][0]['text'])
+        creation_date = datetime.utcnow().strftime('%Y-%m-%d')
+
         # Validate the tags
         all_tags = get_all_tags()
         for tag, value in summary_and_tags['tags'].items():
+
+            if tag == "creation_date":
+                try:
+                    datetime.strptime(value, "%Y-%m-%d")
+                except ValueError:
+                    print(f"Invalid creation_date format for {key}, resetting to blank.")
+                    summary_and_tags['tags'][tag] = ""
+                continue
+
+            if not value or not value.strip():
+                summary_and_tags['tags'][tag] = "unknown"
+                continue
+
             if tag in all_tags:
                 if all_tags[tag] and value not in all_tags[tag]:
                     summary_and_tags['tags'][tag] = 'unknown'
             else:
                 summary_and_tags['tags'][tag] = 'unknown'
+
+        if not summary_and_tags['tags'].get('creation_date') or not summary_and_tags['tags']['creation_date'].strip():
+            summary_and_tags['tags']['creation_date'] = creation_date
 
         return summary_and_tags
     except Exception as e:
@@ -143,18 +182,28 @@ def get_complete_metadata(bucket):
     all_metadata = {}
     try:
         paginator = s3.get_paginator('list_objects_v2')
+        current_files = set()
         for page in paginator.paginate(Bucket =bucket):
             if 'Contents' in page:
                 for obj in page['Contents']:
                     key = obj['Key']
+                    current_files.add(key)
                     try:
                         all_metadata[key] = get_metadata(bucket,key)
                     except Exception as e:
                         print(f"Error in fetching complete metadata for {key}: {e}")
 
-        metadata_json = json.dumps(all_metadata, indent=4)
         # Upload to S3 with a specific key
         metadata_file = r"metadata.txt"
+
+        # Removing deleted files
+        updated_metadata = {
+            key: value for key, value in all_metadata.items() if key in current_files
+        }
+
+        metadata_json = json.dumps(updated_metadata, indent=4)
+
+
         s3.put_object(
             Bucket=bucket,
             Key=metadata_file,
@@ -162,10 +211,10 @@ def get_complete_metadata(bucket):
             ContentType='text/plain'
         )
         print(f"Metadata successfully uploaded to {bucket}/{metadata_file}")
-        return all_metadata
+        return updated_metadata
 
     except Exception as e:
-        print(f"Error occured in fetching complete metadata : {e}")
+        print(f"Error occurred in fetching complete metadata : {e}")
         return None
 
 
@@ -189,6 +238,7 @@ def lambda_handler(event, context):
 
     try:
         # Get the bucket name and file key from the event, handling URL-encoded characters
+        event_name = event['Records'][0]['eventName']
         bucket = event['Records'][0]['s3']['bucket']['name']
         raw_key = event['Records'][0]['s3']['object']['key']
         key = urllib.parse.unquote_plus(raw_key)
@@ -201,80 +251,103 @@ def lambda_handler(event, context):
             }
 
         print(f"Processing file: Bucket - {bucket}, File - {key}")
+        if event_name.startswith('ObjectRemoved'):
+            print(f"Object removed: {key}")
+            # Update metadata.txt to remove metadata for the deleted file
+            all_metadata = get_complete_metadata(bucket)
+            if all_metadata is not None:
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(all_metadata)
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps("Failed to retrieve metadata")
+                }
 
-        # Retrieve the document content from the knowledge base
-        print(f"file : {key}, kb_id : {kb_id}")
-        document_content = retrieve_kb_docs(key, kb_id)
-        if "Error occurred" in document_content:
-            return {
-                'statusCode': 500,
-                'body': json.dumps("Error retrieving document content from knowledge base")
+        elif event_name.startswith('ObjectCreated'):
+            # Retrieve the document content from the knowledge base
+            print(f"file : {key}, kb_id : {kb_id}")
+            document_content = retrieve_kb_docs(bucket, key, kb_id)
+            if not document_content['content']:
+                return {
+                    'statusCode': 404,
+                    'body': json.dumps("No relevant content found")
+                }
+            else:
+                print(f"Content : {document_content}")
+
+            summary_and_tags = summarize_and_categorize(key,document_content)
+            if "Error generating summary" in summary_and_tags['summary']:
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps("Error generating summary and tags")
+                }
+            else:
+                print(f"Summary and category : {summary_and_tags}")
+
+
+
+
+            try:
+                existing_metadata = get_metadata(bucket,key)
+            except Exception as e:
+                print(f"Error fetching metadata for {key}: {e}")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps(f"Error fetching metadata for {key}: {e}")
+                }
+
+            # Generate new metadata fields
+
+            new_metadata = {
+                'summary': summary_and_tags['summary'],
+                **{f"tag_{k}": v for k, v in summary_and_tags['tags'].items()}
             }
+
+            # Merge new metadata with any existing metadata
+            updated_metadata = {**existing_metadata, **new_metadata}
+            updated_metadata = {k.replace(" ", "_"): v for k, v in updated_metadata.items()} # Replace spaces in keys
+            print(f"Updated Metadata : {updated_metadata}")
+
+            # Copy the object to itself to update metadata
+            try:
+                s3.copy_object(
+                    Bucket=bucket,
+                    CopySource={'Bucket': bucket, 'Key': key},
+                    Key=key,
+                    Metadata=updated_metadata,
+                    MetadataDirective='REPLACE'
+                )
+                print(f"Metadata successfully updated for {key}: {updated_metadata}")
+            except Exception as e:
+                print("Error in copying file copy")
+                print(f"Error updating metadata for {key}: {e}")
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps(f"Error updating metadata for {key}: {e}")
+                }
+
+            all_metadata = get_complete_metadata(bucket)
+            if all_metadata is not None:
+                print(f"All Metadata : {all_metadata}")
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps(all_metadata)
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'body': json.dumps("Failed to retrieve metadata")
+                }
+
         else:
-            print(f"Content : {document_content}")
-
-        summary_and_tags = summarize_and_categorize(key,document_content)
-        if "Error generating summary" in summary_and_tags['summary']:
+            print(f"Unhandled event type: {event_name}")
             return {
-                'statusCode': 500,
-                'body': json.dumps("Error generating summary and tags")
+                'statusCode': 400,
+                'body': json.dumps("Unhandled event type")
             }
-        else:
-            print(f"Summary and category : {summary_and_tags}")
-
-
-
-
-        try:
-            existing_metadata = get_metadata(bucket,key)
-        except Exception as e:
-            print(f"Error fetching metadata for {key}: {e}")
-            return {
-                'statusCode': 500,
-                'body': json.dumps(f"Error fetching metadata for {key}: {e}")
-            }
-
-        # Generate new metadata fields
-
-        new_metadata = {
-            'summary': summary_and_tags['summary'],
-            **{f"tag_{k}": v for k, v in summary_and_tags['tags'].items()}
-        }
-
-        # Merge new metadata with any existing metadata
-        updated_metadata = {**existing_metadata, **new_metadata}
-
-        # Copy the object to itself to update metadata
-        try:
-            s3.copy_object(
-                Bucket=bucket,
-                CopySource={'Bucket': bucket, 'Key': key},
-                Key=key,
-                Metadata=updated_metadata,
-                MetadataDirective='REPLACE'
-            )
-            print(f"Metadata successfully updated for {key}: {updated_metadata}")
-        except Exception as e:
-            print("Error in copying file copy")
-            print(f"Error updating metadata for {key}: {e}")
-            return {
-                'statusCode': 500,
-                'body': json.dumps(f"Error updating metadata for {key}: {e}")
-            }
-
-        all_metadata = get_complete_metadata(bucket)
-        if all_metadata is not None:
-            print(f"All Metadata : {all_metadata}")
-            return {
-                'statusCode': 200,
-                'body': json.dumps(all_metadata)
-            }
-        else:
-            return {
-                'statusCode': 500,
-                'body': json.dumps("Failed to retrieve metadata")
-            }
-
     except Exception as e:
         print(f"Unexpected error processing file: {e}")
         return {
